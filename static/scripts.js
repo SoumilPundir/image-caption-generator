@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateButton = document.getElementById('generate-caption');
     const captionResult = document.getElementById('caption-result');
 
-    // Preview uploaded image
     imageUpload.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -13,27 +12,25 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onload = (event) => {
                 previewImage.src = event.target.result;
                 previewImage.classList.remove('hidden');
-                imageUrl.value = ''; // Clear URL input
+                imageUrl.value = '';
             };
             reader.readAsDataURL(file);
         }
     });
 
-    // Preview image from URL
     imageUrl.addEventListener('change', (e) => {
         const url = e.target.value;
         if (url) {
             previewImage.src = url;
             previewImage.classList.remove('hidden');
-            imageUpload.value = ''; // Clear file input
+            imageUpload.value = '';
         }
     });
 
-    // Generate caption
+ 
     generateButton.addEventListener('click', async () => {
         let imageSource;
-        
-        // Determine image source
+    
         if (imageUpload.files.length > 0) {
             imageSource = imageUpload.files[0];
         } else if (imageUrl.value) {
@@ -43,17 +40,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Show loading state
         captionResult.textContent = 'Generating caption...';
         captionResult.classList.remove('hidden');
 
         try {
-            // Prepare payload based on image source
             const payload = imageUpload.files.length > 0 
                 ? { image_base64: previewImage.src }
                 : { image_url: imageSource };
 
-            // Send request to backend
             const response = await fetch('/generate_caption', {
                 method: 'POST',
                 headers: {
