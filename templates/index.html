@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Caption Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold mb-6 text-center">Image Caption Generator</h1>
+        
+        <div class="mb-4">
+            <label class="block mb-2 text-sm font-medium text-gray-600">
+                Upload Image
+            </label>
+            <input 
+                type="file" 
+                id="image-upload" 
+                accept="image/*" 
+                class="w-full p-2 border rounded-md mb-2"
+            >
+            <input 
+                type="text" 
+                id="image-url" 
+                placeholder="Or paste an image URL" 
+                class="w-full p-2 border rounded-md"
+            >
+        </div>
+        
+        <div class="mb-4 text-center">
+            <img 
+                id="preview-image" 
+                src="" 
+                alt="Image Preview" 
+                class="mx-auto hidden mb-4 max-h-64"
+            >
+        </div>
+        
+        <button 
+            id="generate-caption" 
+            class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition"
+        >
+            Generate Caption
+        </button>
+        
+        <div 
+            id="caption-result" 
+            class="mt-4 p-3 bg-gray-100 rounded-md text-center hidden"
+        ></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const imageUpload = document.getElementById('image-upload');
+            const imageUrl = document.getElementById('image-url');
+            const previewImage = document.getElementById('preview-image');
+            const generateButton = document.getElementById('generate-caption');
+            const captionResult = document.getElementById('caption-result');
+
+            // Preview uploaded image
+            imageUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        previewImage.src = event.target.result;
+                        previewImage.classList.remove('hidden');
+                        imageUrl.value = ''; // Clear URL input
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Preview image from URL
+            imageUrl.addEventListener('change', (e) => {
+                const url = e.target.value;
+                if (url) {
+                    previewImage.src = url;
+                    previewImage.classList.remove('hidden');
+                    imageUpload.value = ''; // Clear file input
+                }
+            });
+
+            // Generate caption
+            generateButton.addEventListener('click', async () => {
+                let imageSource;
+                
+                // Determine image source
+                if (imageUpload.files.length > 0) {
+                    imageSource = previewImage.src;
+                } else if (imageUrl.value) {
+                    imageSource = imageUrl.value;
+                } else {
+                    alert('Please upload an image or provide an image URL');
+                    return;
+                }
+
+                // Show loading state
+                captionResult.textContent = 'Generating caption...';
+                captionResult.classList.remove('hidden');
+
+                try {
+                    // Prepare payload based on image source
+                    const payload = imageUpload.files.length > 0 
+                        ? { image_base64: imageSource }
+                        : { image_url: imageSource };
+
+                    // Send request to backend
+                    const response = await fetch('/generate_caption', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        captionResult.textContent = data.caption;
+                    } else {
+                        captionResult.textContent = 'Error: ' + data.message;
+                    }
+                } catch (error) {
+                    captionResult.textContent = 'Error generating caption: ' + error.message;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
